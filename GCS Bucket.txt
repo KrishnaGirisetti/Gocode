@@ -1,0 +1,58 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"cloud.google.com/go/storage"
+)
+
+func main() {
+	// Your Google Cloud Platform project ID
+	projectID := "your-project-id"
+
+	// The name for the new bucket. Must be globally unique.
+	bucketName := "your-unique-bucket-name"
+
+	// The name for the text file to be stored in the bucket
+	fileName := "example.txt"
+
+	// Create a new context
+	ctx := context.Background()
+
+	// Initialize a new GCP storage client
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		log.Fatalf("Failed to create GCP storage client: %v", err)
+	}
+	defer client.Close()
+
+	// Create a new GCS bucket handle
+	bucket := client.Bucket(bucketName)
+
+	// Create the GCS bucket
+	if err := bucket.Create(ctx, projectID, nil); err != nil {
+		log.Fatalf("Failed to create GCS bucket: %v", err)
+	}
+
+	fmt.Printf("Bucket %s created.\n", bucketName)
+
+	// Write text content to be stored in the file
+	content := []byte("Hello, world!")
+
+	// Create a new writer for the file
+	wc := bucket.Object(fileName).NewWriter(ctx)
+
+	// Write the content to the file
+	if _, err := wc.Write(content); err != nil {
+		log.Fatalf("Failed to write to GCS file: %v", err)
+	}
+
+	// Close the writer
+	if err := wc.Close(); err != nil {
+		log.Fatalf("Failed to close GCS file writer: %v", err)
+	}
+
+	fmt.Printf("File %s uploaded to bucket %s.\n", fileName, bucketName)
+}
