@@ -1,0 +1,76 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"os"
+
+	"cloud.google.com/go/storage"
+)
+
+func main() {
+	// Get the GCS bucket name from an environment variable.
+	bucketName := os.Getenv("GCS_BUCKET_NAME")
+	if bucketName == "" {
+		log.Fatal("GCS_BUCKET_NAME environment variable is not set")
+	}
+
+	// Get the name of the file to read from an environment variable.
+	objectName := os.Getenv("GCS_OBJECT_NAME")
+	if objectName == "" {
+		log.Fatal("GCS_OBJECT_NAME environment variable is not set")
+	}
+
+	// Get the project ID from an environment variable.
+	projectID := os.Getenv("GCP_PROJECT_ID")
+
+	// Set up a context.
+	ctx := context.Background()
+
+	// Create a Google Cloud Storage client.
+	var client *storage.Client
+	var err error
+	if projectID != "" {
+		client, err = storage.NewClient(ctx, option.WithProjectID(projectID))
+		if err != nil {
+			log.Fatalf("Failed to create client: %v", err)
+		}
+	} else {
+		client, err = storage.NewClient(ctx)
+		if err != nil {
+			log.Fatalf("Failed to create client: %v", err)
+		}
+	}
+	defer client.Close()
+
+	// Open a reader for the object in the bucket.
+	reader, err := client.Bucket(bucketName).Object(objectName).NewReader(ctx)
+	if err != nil {
+		log.Fatalf("Failed to open object for reading: %v", err)
+	}
+	defer reader.Close()
+
+	// Read the object contents.
+	data := make([]byte, reader.Size())
+	if _, err := reader.Read(data); err != nil {
+		log.Fatalf("Failed to read data from object: %v", err)
+	}
+
+	// Convert the data to JSON format.
+	var jsonData interface{}
+	if err := json.Unmarshal(data, &jsonData); err != nil {
+		log.Fatalf("Failed to unmarshal data to JSON: %v", err)
+	}
+
+	// Marshal the JSON data.
+	jsonBytes, err := json.MarshalIndent(jsonData, "", "    ")
+	if err != nil {
+		log.Fatalf("Failed to marshal JSON: %v", err)
+	}
+
+	// Print or save the JSON data.
+	fmt.Println("File contents (JSON format):")
+	fmt.Println(string(jsonBytes))
+}
