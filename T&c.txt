@@ -75,3 +75,82 @@ pipeline {
 </code></div></pre><pre><div><code>In this script, replace `gs://my-bucket/my-file.txt` with the path to your file in the Google Cloud Storage Bucket. Replace `"New content"` with the changes you want to make to the file.
 </code></div></pre>
 Please note that this is a basic example. Depending on your use case, you may need to install additional tools on your Jenkins server to modify the file. For example, if the file is a JSON file, you may want to use a tool like <code>jq</code> to modify it.</p><p>Also, ensure to handle the credentials securely. The best practice is to use Jenkins credentials binding plugin to securely handle the credentials.</p>
+
+
+
+
+<p>Sure, in order to modify a JSON file, you can use a command line tool like <code>jq</code>. Here is an example of how to use <code>jq</code> in a Jenkins pipeline to modify a JSON file in a Google Cloud Storage Bucket:
+<pre><div><code>pipeline {
+    agent any
+    stages {
+        stage('Modify JSON file in GCS') {
+            steps {
+                sh '''
+                    # Download the JSON file
+                    gsutil cp gs://my-bucket/my-file.json .
+
+                    # Modify the JSON file
+                    jq '.key = "new value"' my-file.json &gt; temp.json && mv temp.json my-file.json
+
+                    # Upload the JSON file back to the bucket
+                    gsutil cp my-file.json gs://my-bucket/my-file.json
+                '''
+            }
+        }
+    }
+}</code></div></pre></p><p>In this script, replace <code>gs://my-bucket/my-file.json</code> with the path to your JSON file in the Google Cloud Storage Bucket. Replace <code>'.key = "new value"'</code> with the changes you want to make to the JSON file. The <code>jq</code> command in this example adds or updates a key called <code>key</code> with the value <code>"new value"</code>.</p><p>You also need to install <code>jq</code> on your Jenkins server. You can usually do this with your package manager, for example, on Ubuntu, you can use the command <code>sudo apt-get install jq</code>.</p><p>Again, please handle your credentials securely and consider using the Jenkins credentials binding plugin.</p>
+
+
+
+
+
+<p>Sure, here is an example of a spike document for the problem:</p><hr/><p><strong>Objective:</strong> </p><p>The objective of this spike is to investigate the process and tools necessary to modify a JSON file stored in a Google Cloud Storage Bucket via a Jenkins pipeline.</p><p><strong>Problem Statement:</strong></p><p>We need to automate the modification of a JSON file that is stored in a Google Cloud Storage Bucket. The modification process should be handled by a Jenkins pipeline. </p><p><strong>Proposed Solution:</strong></p><ol start="1"><li>We will use the Google Cloud SDK <code>gsutil</code> tool to interact with Google Cloud Storage. This tool should be installed on the Jenkins server.</li></ol>
+
+<ol start="2"><li>We will authenticate Jenkins to Google Cloud using a service account with necessary permissions.</li></ol>
+
+<ol start="3"><li>We will use the <code>jq</code> tool to modify the JSON file. This tool should also be installed on the Jenkins server.</li></ol>
+
+<ol start="4"><li>We will create a Jenkins pipeline that will:
+<ul><li>Download the JSON file from the Google Cloud Storage Bucket.</li><li>Modify the JSON file using <code>jq</code>.</li><li>Upload the modified JSON file back to the bucket.</li></ul></li></ol><p><strong>Tasks:</strong></p><ol start="1"><li>Install Google Cloud SDK and <code>jq</code> on the Jenkins server.</li></ol>
+
+<ol start="2"><li>Create and configure a service account in Google Cloud Console, download the key file and authenticate Jenkins to Google Cloud.</li></ol>
+
+<ol start="3"><li>Write the Jenkins pipeline script, testing each step individually and then as a whole.</li></ol><p><strong>Risks and Assumptions:</strong></p><ul><li>We assume that the Jenkins server has network access to Google Cloud Storage.</li><li>We assume that the Jenkins server has the necessary permissions to install software and interact with Google Cloud Storage.</li><li>We assume that the JSON file structure is known and consistent.</li><li>The risk of exposing sensitive data such as service account credentials exists. We will mitigate this risk by using the Jenkins credentials binding plugin to handle credentials securely.</li></ul><p><strong>Success Criteria:</strong></p><p>The spike is successful if we are able to modify the JSON file in the Google Cloud Storage Bucket using a Jenkins pipeline and <code>jq</code> tool.</p><p><strong>Timeline:</strong> </p><p>The spike should take approximately 2-3 days to complete. This includes time for installation, configuration, script development, and testing. </p><hr/><p>This document outlines the problem, proposed solution, necessary tasks, risks, assumptions, success criteria, and timeline for the spike. The details might vary based on your specific context and requirements.</p>
+
+
+
+<p>Sure, here's a more detailed look at the three proposed solutions:</p><ol start="1"><li><strong>Google Cloud SDK (gsutil) and jq:</strong></li></ol><p>   You can use the Google Cloud SDK's <code>gsutil</code> tool to download and upload files to/from your bucket. To modify the JSON file, you can use <code>jq</code>.</p><p>   ```bash</p><h1>Download the JSON file</h1><p>   gsutil cp gs://my-bucket/my-file.json .</p><h1>Modify the JSON file</h1><p>   jq '.key = "new value"' my-file.json &gt; temp.json && mv temp.json my-file.json</p><h1>Upload the JSON file back to the bucket</h1><p>   gsutil cp my-file.json gs://my-bucket/my-file.json
+   <code>`</code></p><ol start="2"><li><strong>Google Cloud Functions:</strong></li></ol><p>   Google Cloud Functions is a serverless execution environment for building and connecting cloud services. You can write a function that gets triggered when a file gets uploaded to your bucket. This function can then modify the file and upload it back. Here's a Python example:</p><p>   <code><code>python
+   def modify_file(data, context):<pre><div><code>   from google.cloud import storage
+   import json
+</code></div></pre><pre><div><code>   client = storage.Client()
+   bucket = client.get_bucket(data['bucket'])
+   blob = storage.Blob(data['name'], bucket)
+   json_data = json.loads(blob.download_as_text())
+</code></div></pre><pre><div><code>   # Modify the JSON data
+   json_data['key'] = 'new value'
+</code></div></pre><pre><div><code>   # Upload the modified JSON data back to the bucket
+   blob.upload_from_string(json.dumps(json_data))
+</code></div></pre>   </code></code></p><p>   You would deploy this function to Google Cloud and set it to trigger on <code>google.storage.object.finalize</code> events.</p><ol start="3"><li><strong>Google Cloud Storage Client Libraries:</strong></li></ol><p>   Google Cloud Storage Client Libraries allow you to interact with your buckets using your preferred programming language. Below is a Python example:</p><p>   ```python
+   from google.cloud import storage
+   import json</p><p>   def modify_file(bucket_name, blob_name):<pre><div><code>   client = storage.Client()
+   bucket = client.get_bucket(bucket_name)
+   blob = storage.Blob(blob_name, bucket)
+   json_data = json.loads(blob.download_as_text())
+</code></div></pre><pre><div><code>   # Modify the JSON data
+   json_data['key'] = 'new value'
+</code></div></pre><pre><div><code>   # Upload the modified JSON data back to the bucket
+   blob.upload_from_string(json.dumps(json_data))
+</code></div></pre>
+   modify_file('my-bucket', 'my-file.json')
+   <code>`</code></p><p>Please note that these are basic examples. You might need to install additional libraries (like <code>jq</code> for the first method, and <code>google-cloud-storage</code> for the second and third methods), handle errors, and use secure methods to handle credentials.</p>
+
+
+
+
+
+<p>The convenience and speed of the three methods can depend on several factors including the size of the file, the complexity of the modifications, the frequency of modifications, and the specific requirements of your project. Here's a general comparison:</p><ol start="1"><li><strong>Google Cloud SDK (gsutil) and jq:</strong> This method is relatively simple and straightforward, especially for small files that need to be modified infrequently. The gsutil tool is efficient and fast for downloading and uploading files. However, for larger files or more complex modifications, this method might not be the most convenient, as it requires downloading the entire file, modifying it locally, and then uploading it back to the bucket.</li></ol>
+
+<ol start="2"><li><strong>Google Cloud Functions:</strong> This method can be more convenient for larger files or when modifications need to be made every time a file is uploaded to the bucket. The function runs in the cloud, so it does not require downloading and uploading the entire file. However, writing, deploying, and maintaining a Google Cloud Function can be more complex than the other methods. The speed of execution can also depend on the resources allocated to the function and the current load on the Google Cloud Functions service.</li></ol>
+
+<ol start="3"><li><strong>Google Cloud Storage Client Libraries:</strong> Like the Google Cloud Functions method, this method can be more convenient for larger files or more frequent modifications. It also does not require downloading and uploading the entire file. The speed and efficiency can depend on the specific client library and the resources of the machine where the script is running.</li></ol><p>In general, if you need to modify a file every time it's uploaded to the bucket and you don't want to download and upload the entire file, you might find the Google Cloud Functions or the Google Cloud Storage Client Libraries method more convenient. If you only need to modify a file occasionally and it's not too large, the Google Cloud SDK (gsutil) and jq method might be more convenient and fast.</p>
