@@ -153,4 +153,54 @@ Please note that this is a basic example. Depending on your use case, you may ne
 
 <ol start="2"><li><strong>Google Cloud Functions:</strong> This method can be more convenient for larger files or when modifications need to be made every time a file is uploaded to the bucket. The function runs in the cloud, so it does not require downloading and uploading the entire file. However, writing, deploying, and maintaining a Google Cloud Function can be more complex than the other methods. The speed of execution can also depend on the resources allocated to the function and the current load on the Google Cloud Functions service.</li></ol>
 
-<ol start="3"><li><strong>Google Cloud Storage Client Libraries:</strong> Like the Google Cloud Functions method, this method can be more convenient for larger files or more frequent modifications. It also does not require downloading and uploading the entire file. The speed and efficiency can depend on the specific client library and the resources of the machine where the script is running.</li></ol><p>In general, if you need to modify a file every time it's uploaded to the bucket and you don't want to download and upload the entire file, you might find the Google Cloud Functions or the Google Cloud Storage Client Libraries method more convenient. If you only need to modify a file occasionally and it's not too large, the Google Cloud SDK (gsutil) and jq method might be more convenient and fast.</p>
+<ol start="3"><li><strong>Google Cloud Storage Client Libraries:</strong> Like the Google Cloud Functions method, this method can be more convenient for larger files or more frequent modifications. It also does not require downloading and uploading the entire file. The speed and efficiency can depend on the specific client library and the resources of the machine where the script is running.</li></ol><p>In general, if you need to modify a file every time it's uploaded to the bucket and you don't want to download and upload the entire file, you might find the Google Cloud Functions or the Google Cloud Storage Client Libraries method more convenient. If you only need to modify a file occasionally and it's not too large, the Google Cloud SDK (gsutil) and jq method 
+might be more convenient and fast.</p>
+
+
+
+
+<p>Here is an example of how you could modify the JSON object and then upload the modified JSON object back to GCS Bucket using the Google Cloud Storage library for Java:
+<pre><div><code>// Imports the Google Cloud client library
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import org.json.JSONObject;
+import java.nio.charset.StandardCharsets;
+
+// Instantiate a Cloud Storage client
+Storage storage = StorageOptions.getDefaultInstance().getService();
+
+// The name of the bucket to access
+String bucketName = "my-bucket";
+
+// The name of the remote file to download
+String srcFilename = "file.json";
+
+// Get specific file from specified bucket
+Blob blob = storage.get(bucketName, srcFilename);
+
+// Get the content of the file as a byte array
+byte[] content = blob.getContent();
+
+// Convert the byte array to a String
+String jsonContent = new String(content);
+
+// Parse the JSON content as a JSONObject
+JSONObject jsonObject = new JSONObject(jsonContent);
+
+// Modify the JSONObject here. For example, add a new key-value pair
+jsonObject.put("newKey", "newValue");
+
+// Convert the modified JSONObject back to a string
+String modifiedJsonContent = jsonObject.toString();
+
+// Create a blobId
+BlobId blobId = BlobId.of(bucketName, srcFilename);
+
+// Create a blobInfo
+BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/json").build();
+
+// Upload the modified JSON content back to the bucket
+storage.create(blobInfo, modifiedJsonContent.getBytes(StandardCharsets.UTF_8));</code></div></pre></p><p>In this code, after reading and modifying the JSON object, we convert the modified JSON object back to a string. We then create a BlobInfo object, which includes the bucket name and the filename for the upload. Finally, we use the <code>storage.create()</code> function to upload the modified JSON string back to the bucket. The <code>getBytes(StandardCharsets.UTF_8)</code> is used to convert the JSON string to a byte array for the upload.</p>
